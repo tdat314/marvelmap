@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="board-wrap" style="grid-template-columns: 1fr;">
+  <main class="sidebar" style="max-width: 420px; margin: 40px auto;">
+    <h2>GM Login</h2>
+    {% if error %}
+      <div class="badge failed" role="alert">{{ error }}</div>
+    {% endif %}
+    <form method="post" style="display:grid; gap:10px; margin-top:10px">
+      <label class="readable">
+        <div>Username</div>
+        <input name="username" required style="width:100%; padding:10px; border-radius:10px; border:1px solid #2d3b61; background:#0f1726; color:#e7eefc">
+      </label>
+      <label class="readable">
+        <div>Password</div>
+        <input type="password" name="password" required style="width:100%; padding:10px; border-radius:10px; border:1px solid #2d3b61; background:#0f1726; color:#e7eefc">
+      </label>
+      <button class="badge success" style="border:none; cursor:pointer; padding:10px 14px; font-weight:600">Sign in</button>
+    </form>
+  </main>
+</div>
+{% endblock %}

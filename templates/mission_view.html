@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="pad">
+  <!-- Player-visible section -->
+  <h2 class="h-title">{{ m.title }}</h2>
+  <div class="mission-meta">
+    <span class="chip {{ m.status|replace(' ','-') }}">{{ m.status }}</span>
+    <span class="chip tone">{{ m.difficulty }}</span>
+    {% if m.tags %}<span class="muted">•</span><span class="tags">{{ m.tags }}</span>{% endif %}
+  </div>
+
+  <h3 style="margin-top:18px;">Brief</h3>
+  <p>{{ m.brief or "—" }}</p>
+
+  {% if IS_GM %}
+  <!-- GM-only backend (inline edit) -->
+  <details class="gm-panel" open>
+    <summary>GM Panel — Edit Mission</summary>
+    <div class="gm-body">
+      <form method="post" action="{{ url_for('mission_update', mid=m.id) }}" class="gm-form">
+        <div class="grid-2">
+          <label>Title<br><input class="w" name="title" value="{{ m.title|e }}" required></label>
+          <label>Tags (comma-separated)<br><input class="w" name="tags" value="{{ m.tags|e }}"></label>
+        </div>
+
+        <div class="grid-3">
+          <label>Status<br>
+            <select class="w" name="status">
+              {% for s in ['open','scheduled','in-progress','locked','complete','archived'] %}
+                <option value="{{ s }}" {% if m.status==s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Difficulty<br>
+            <select class="w" name="difficulty">
+              {% for d in ['easy','standard','hard','epic'] %}
+                <option value="{{ d }}" {% if m.difficulty==d %}selected{% endif %}>{{ d }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Region hint<br><input class="w" name="region_hint" value="{{ m.region_hint|e }}"></label>
+        </div>
+
+        <label>Brief (player-facing)<br>
+          <textarea class="w" name="brief" rows="4">{{ m.brief|e }}</textarea>
+        </label>
+
+        <label>GM Dossier (hidden from players)<br>
+          <textarea class="w mono" name="dossier" rows="8">{{ m.dossier|default('', true) }}</textarea>
+        </label>
+
+        <div class="grid-3">
+          <label>Global X (0..1)<br><input class="w" type="number" step="0.001" min="0" max="1" name="x" value="{{ '%.3f' % m.x }}"></label>
+          <label>Global Y (0..1)<br><input class="w" type="number" step="0.001" min="0" max="1" name="y" value="{{ '%.3f' % m.y }}"></label>
+          <div>
+            <span class="muted">Updated</span><br>
+            <span>{{ m.updated_at }}</span>
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:12px;">
+          <button class="btn-primary" type="submit">Save</button>
+          <a class="btn-secondary" href="{{ url_for('mission_detail', mid=m.id) }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </details>
+  {% else %}
+  <p class="meta" style="margin-top:18px;">GM notes and technical details are hidden.</p>
+  {% endif %}
+</div>
+
+<style>
+.gm-panel {
+  margin-top: 22px;
+  background: #0b1225;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+}
+.gm-panel > summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  list-style: none;
+}
+.gm-panel > summary::-webkit-details-marker { display:none; }
+.gm-body { padding: 0 12px 12px 12px; }
+
+.gm-form .w{
+  width:100%; padding:10px; border-radius:10px; border:1px solid var(--border);
+  background:#070c19; color:var(--text);
+}
+.gm-form .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+.gm-form .grid-2 { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; margin-bottom:10px; }
+.gm-form .grid-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; margin:10px 0; }
+
+.btn-secondary {
+  display:inline-block; padding:10px 14px; border-radius:12px;
+  background:#0b1225; border:1px solid var(--border); color:var(--text); text-decoration:none; font-weight:700;
+}
+.btn-secondary:hover { filter:brightness(1.08); }
+</style>
+{% endblock %}

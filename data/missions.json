@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "title": "Secure Wakandan Outpost",
+    "status": "pending",
+    "description": "Investigate energy spikes; deploy stealth team."
+  },
+  {
+    "id": 2,
+    "title": "Extract S.H.I.E.L.D. Asset",
+    "status": "success",
+    "description": "Escort asset from Madripoor docks."
+  },
+  {
+    "id": 3,
+    "title": "Contain Gamma Anomaly",
+    "status": "failed",
+    "description": "Zone remains unstable; request reinforcements."
+  }
+]

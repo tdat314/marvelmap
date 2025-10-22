@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Marvel Ops Board</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='board.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <a href="{{ url_for('map_global') }}" class="brand">🌐 Marvel Ops Board</a>
+  <nav class="nav">
+    <a href="{{ url_for('missions_list') }}">Missions</a>
+  </nav>
+  <form method="post" action="{{ url_for('gm_logout') if IS_GM else url_for('gm_login') }}" class="gm">
+    {% if IS_GM %}
+      <span class="gm-badge">GM</span>
+      <button type="submit">Logout</button>
+    {% else %}
+      <input type="password" name="password" placeholder="GM password">
+      <button type="submit">GM login</button>
+    {% endif %}
+  </form>
+</header>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

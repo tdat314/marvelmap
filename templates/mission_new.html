@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="pad">
+  <h2 class="h-title">New Mission</h2>
+  <form method="post" action="{{ url_for('mission_create') }}">
+    <p><label>Title<br><input name="title" required class="w"></label></p>
+    <p><label>Tags (comma-separated)<br><input name="tags" class="w"></label></p>
+    <p>
+      <label>Status<br>
+        <select name="status" class="w">
+          <option>open</option><option>scheduled</option><option>in-progress</option>
+          <option>locked</option><option>complete</option><option>archived</option>
+        </select>
+      </label>
+    </p>
+    <p>
+      <label>Difficulty<br>
+        <select name="difficulty" class="w">
+          <option>easy</option><option selected>standard</option><option>hard</option><option>epic</option>
+        </select>
+      </label>
+    </p>
+    <p><label>Region hint<br><input name="region_hint" class="w"></label></p>
+    <p><label>Brief (player-facing)<br><textarea name="brief" class="w" rows="4"></textarea></label></p>
+    <p><label>GM Dossier<br><textarea name="dossier" class="w" rows="6"></textarea></label></p>
+    <p>
+      <label>Global X (0..1)<br><input type="number" step="0.001" min="0" max="1" name="x" value="0.5"></label>
+      <label style="margin-left:12px;">Global Y (0..1)<br><input type="number" step="0.001" min="0" max="1" name="y" value="0.5"></label>
+    </p>
+    <p><button class="btn-primary" type="submit">Create</button></p>
+  </form>
+</div>
+<style>
+.w{ width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:#0b1225; color:var(--text); }
+</style>
+{% endblock %}

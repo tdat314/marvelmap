@@ -1,0 +1,154 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div id="map"></div>
+
+<div class="toolbar">
+  <a class="btn" href="{{ url_for('map_global') }}">🌐 Global</a>
+
+  <select id="regionSel" title="Jump to region">
+    <option value="">— Region —</option>
+  </select>
+
+  <input id="tagFilter" placeholder="Filter by tag/title…" title="Type to filter markers" />
+
+  <!-- Advent tracker (server-rendered) -->
+  <div id="advent" class="advent">
+    <span id="adv-label">{{ (timer.label if timer else 'ADVENT') }}</span>
+    <div id="adv-pips" class="pips">
+      {% set ticks = (timer.ticks if timer else 0) %}
+      {% set max_ticks = (timer.max_ticks if timer else 6) %}
+      {% for i in range(max_ticks) %}
+        <span class="pip {% if i < ticks %}filled{% endif %}"></span>
+      {% endfor %}
+    </div>
+    {% if IS_GM %}
+      <form method="post" action="/timer/dec" style="display:inline"><button type="submit" class="pipbtn">−</button></form>
+      <form method="post" action="/timer/inc" style="display:inline"><button type="submit" class="pipbtn">+</button></form>
+    {% endif %}
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--ok)"></span>open</span>
+    <span><span class="dot" style="background:var(--warn)"></span>scheduled</span>
+    <span><span class="dot" style="background:var(--info)"></span>in-progress</span>
+    <span><span class="dot" style="background:var(--danger)"></span>locked</span>
+  </div>
+</div>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const VIEW = "{{ view }}";
+  const DATA = {{ data|safe }};
+
+  // Leaflet base
+  const map = L.map('map', { crs: L.CRS.Simple, minZoom: -1, maxZoom: 2 });
+  let overlay, markers = L.layerGroup().addTo(map);
+  let allMarkerObjs = [];
+
+  function setImage(img, w, h){
+    if(overlay) map.removeLayer(overlay);
+    const bounds = [[0,0],[h,w]];
+    overlay = L.imageOverlay(`/static/${img}`, bounds).addTo(map);
+    map.setMaxBounds(bounds); map.fitBounds(bounds);
+  }
+  function n2pt(x,y,w,h){ return L.latLng(y*h, x*w); }
+
+  // Marker + tooltip/popup
+  const colors = { draft:'#94a3b8', open:'#10b981', scheduled:'#f59e0b', 'in-progress':'#3b82f6', complete:'#64748b', locked:'#ef4444', published:'#22d3ee', archived:'#6b7280' };
+  function icon(color){
+    return L.divIcon({
+      html:`<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #111;box-shadow:0 0 0 2px rgba(0,0,0,.2)"></div>`,
+      className:'', iconSize:[18,18], iconAnchor:[9,9]
+    });
+  }
+  const esc = s => (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function popupHTML(m){
+    const tags = (m.tags||'').split(',').map(t=>t.trim()).filter(Boolean)
+                  .map(t=>`<span class="badge">${esc(t)}</span>`).join('');
+    return `
+      <div class="popup-card">
+        <h3 class="popup-title">${esc(m.title)}</h3>
+        <div class="badges">${tags}</div>
+        <div class="meta"><b>${esc(m.status)}</b> • ${esc(m.difficulty||'standard')}</div>
+        <div>${esc(m.brief||'')}</div>
+        <div class="actions"><a href="/missions/${m.id}">Open</a></div>
+      </div>`;
+  }
+
+  function placeMission(m, w, h, xNorm, yNorm){
+    const mk = L.marker(
+      n2pt(xNorm, yNorm, w, h),
+      { icon: icon(colors[m.status] || '#94a3b8'), riseOnHover: true }
+    )
+    .bindPopup(popupHTML(m))
+    .bindTooltip(
+      `<span class="tip-title">${esc(m.title)}</span><br><span class="tip-meta">${esc(m.status)} • ${esc(m.difficulty||'standard')}</span>`,
+      { className: 'marker-tip', direction:'top', offset:[0,-12], sticky:true, opacity:0.95 }
+    );
+    mk.addTo(markers);
+    allMarkerObjs.push({ mk, text: (m.title + ' ' + (m.tags||'') + ' ' + m.status).toLowerCase() });
+  }
+
+  function renderGlobal(){
+    markers.clearLayers(); allMarkerObjs = [];
+    const g = DATA.global; setImage(g.img, g.w, g.h);
+    for(const r of (DATA.regions||[])){
+      const rect = L.rectangle([[r.y0*g.h, r.x0*g.w],[r.y1*g.h, r.x1*g.w]], {color:'#38bdf8', weight:1, fill:false});
+      rect.addTo(markers).on('click', ()=> window.location.href = `/region/${r.name}`);
+    }
+    for(const m of (DATA.missions||[])){ placeMission(m, g.w, g.h, m.x, m.y); }
+  }
+
+  function renderRegion(){
+    markers.clearLayers(); allMarkerObjs = [];
+    const r = DATA.region; setImage(r.img, r.w, r.h);
+    for(const m of (DATA.missions||[])){
+      if(!(m.x>=r.x0 && m.x<=r.x1 && m.y>=r.y0 && m.y<=r.y1)) continue;
+      const rx = (m.x - r.x0) / (r.x1 - r.x0);
+      const ry = (m.y - r.y0) / (r.y1 - r.y0);
+      placeMission(m, r.w, r.h, rx, ry);
+    }
+  }
+
+  // Controls
+  const sel = document.getElementById('regionSel');
+  (DATA.regions||[]).forEach(r => {
+    const o = document.createElement('option'); o.value = r.name; o.textContent = r.name; sel.appendChild(o);
+  });
+  sel.addEventListener('change', e => {
+    const name = e.target.value;
+    if(!name){ window.location.href = '/'; return; }
+    window.location.href = `/region/${name}`;
+  });
+
+  const q = document.getElementById('tagFilter');
+  q.addEventListener('input', () => {
+    const needle = q.value.trim().toLowerCase();
+    allMarkerObjs.forEach(({mk, text}) => {
+      const show = !needle || text.includes(needle);
+      if(show){ mk.addTo(markers); } else { markers.removeLayer(mk); }
+    });
+  });
+
+  // JS enhancement: color pips by urgency
+  (function enhanceAdvent(){
+    const T = DATA.timer || {label:'ADVENT', ticks:0, max_ticks:6};
+    const pipsEl = document.getElementById('adv-pips');
+    if(!pipsEl) return;
+    const ratio = T.ticks / Math.max(1, T.max_ticks);
+    let color = 'var(--ok)';
+    if (ratio >= 0.66) color = 'var(--danger)';
+    else if (ratio >= 0.33) color = 'var(--warn)';
+    pipsEl.querySelectorAll('.pip').forEach(el => {
+      el.style.borderColor = color;
+      if(el.classList.contains('filled')) el.style.background = color;
+    });
+  })();
+
+  if(VIEW === "region") renderRegion(); else renderGlobal();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="board-wrap">
+  <aside class="sidebar" aria-label="Control panel">
+    <h2>Event Tracker</h2>
+    <div id="countdown" class="counter" aria-live="polite">
+      <span class="chip">--</span><span class="chip">--</span><span class="chip">--</span><span class="chip">--</span>
+    </div>
+    <div class="zoom-controls" role="group" aria-label="Zoom controls">
+      <button id="zoom-out" title="Zoom out">−</button>
+      <button id="zoom-reset" title="Reset zoom">Reset</button>
+      <button id="zoom-in" title="Zoom in">+</button>
+    </div>
+    <hr style="margin:16px 0; border:0; border-top:1px solid #2d3b61">
+    <div class="readable" style="font-size:.95rem">
+      <p><strong>GM Login:</strong> <a href="{{ url_for('gm_login') }}">/gm/login</a></p>
+      <p>Demo user: <code>gm / password</code></p>
+    </div>
+  </aside>
+
+  <main class="board">
+    <div class="board-header">
+      <h2 style="margin:0">Missions</h2>
+    </div>
+    <section class="board-grid" aria-live="polite"></section>
+  </main>
+</div>
+{% endblock %}

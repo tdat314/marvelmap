@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="pad">
+  <h2>{{ m['title'] }}</h2>
+  <p><b>Status:</b> {{ m['status'] }} • <b>Difficulty:</b> {{ m['difficulty'] }}</p>
+  <p><b>Tags:</b> {{ m['tags'] }}</p>
+  <p><b>Region:</b> {{ m['region_hint'] }}</p>
+  <h3>Brief</h3>
+  <p>{{ m['brief'] }}</p>
+
+  {% if IS_GM %}
+  <hr>
+  <h3>GM Dossier</h3>
+  <pre style="white-space:pre-wrap">{{ m['dossier'] }}</pre>
+  <form method="post" action="{{ url_for('mission_lock', mid=m['id']) }}">
+    <button>Lock Mission</button>
+  </form>
+  <p><a href="{{ url_for('mission_edit_form', mid=m['id']) }}">Edit</a></p>
+  {% endif %}
+
+  <hr>
+  <h3>Sessions</h3>
+  {% if sessions %}
+    <ul class="list">
+    {% for s in sessions %}
+      <li>
+        <b>{{ s['outcome'] }}</b> — {{ s['summary'] }}
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>No session logs yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
+

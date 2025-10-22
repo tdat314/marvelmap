@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="pad">
+  <h2 class="h-title">Missions</h2>
+
+  {% if IS_GM %}
+    <p class="row-actions">
+      <a class="btn-primary" href="{{ url_for('mission_new_form') }}">+ New Mission</a>
+    </p>
+  {% endif %}
+
+  <ul class="mission-list">
+    {% for m in missions %}
+      <li class="mission-row">
+        <a class="mission-title" href="{{ url_for('mission_detail', mid=m['id']) }}">{{ m['title'] }}</a>
+        <div class="mission-meta">
+          <span class="chip {{ m['status']|replace(' ','-') }}">{{ m['status'] }}</span>
+          <span class="chip tone">{{ m['difficulty'] }}</span>
+          {% if m['tags'] %}
+            <span class="muted">•</span>
+            <span class="tags">{{ m['tags'] }}</span>
+          {% endif %}
+        </div>
+      </li>
+    {% else %}
+      <li class="mission-row empty">No missions yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
